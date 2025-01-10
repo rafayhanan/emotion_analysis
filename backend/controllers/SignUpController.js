@@ -1,27 +1,37 @@
 import User from "../models/User";
 import bcrypt from "bcrypt";
 
-const registerUser = async (req,res) =>{
-    const {firstName, lastName, dateOfBirth, email, password} = req.body;
+const registerUser = async (req, res) => {
+    const { firstName, lastName, dateOfBirth, email, password } = req.body;
 
-    if(!firstName||!lastName||!dateOfBirth||!email||!password){
-        return res.status(400).json("Couldn't find complete user data");
+    if (!firstName || !lastName || !dateOfBirth || !email || !password) {
+        return res.status(400).json({ message: "Incomplete user data" });
     }
 
-    const salt = bcrypt.genSalt(10);
-    const hashedPassword = bcrypt.hash(password,salt);
+    try {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({ message: "Email already in use" });
+        }
 
-    const user = new User({
-        firstName,
-        lastName,
-        dateOfBirth,
-        email,
-        password:hashedPassword
-    });
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-    await user.save();
+        const user = new User({
+            firstName,
+            lastName,
+            dateOfBirth,
+            email,
+            password: hashedPassword,
+        });
 
-    return res.status(200).json("User registered successfully!");
-}
+        await user.save();
+
+        return res.status(201).json({ message: "User registered successfully!" });
+    } catch (error) {
+        console.error("Error registering user:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 export default registerUser;

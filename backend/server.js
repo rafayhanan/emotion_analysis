@@ -4,4 +4,4 @@ import userRouter from "./routes/userRouter";
 
 const app = express();
 
-app.use('/users',userRouter);
+app.use('/api/users',userRouter);
